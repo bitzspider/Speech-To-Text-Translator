@@ -40,12 +40,29 @@ A powerful cross-language transcription and translation tool that uses OpenAI's 
    cd Speech-To-Text-Translator
    ```
 
-2. **Install dependencies**:
+2. **Create a virtual environment** (strongly recommended):
    ```bash
+   # On Windows
+   python -m venv .venv
+   .venv\Scripts\activate
+
+   # On macOS/Linux
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+   
+   You'll know your virtual environment is active when your terminal prompt is prefixed with `(.venv)`.
+
+3. **Install dependencies**:
+   ```bash
+   # Make sure your virtual environment is activated
+   pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
-3. **Set up Ollama** (for translation):
+   This installs all required packages in an isolated environment, preventing conflicts with other Python projects.
+
+4. **Set up Ollama** (for translation):
    - Install Ollama from [ollama.ai](https://ollama.ai)
    - Download at least one language model:
      ```bash
@@ -53,13 +70,21 @@ A powerful cross-language transcription and translation tool that uses OpenAI's 
      # Other options: mistral, gemma:2b, phi3:mini
      ```
 
-4. **Launch the application**:
+5. **Launch the application**:
    ```bash
+   # Make sure your virtual environment is still activated
    python transcribe.py
    ```
 
-5. **Access the UI**:
+6. **Access the UI**:
    - Open your browser at http://localhost:7860
+
+### Deactivating the Virtual Environment
+
+When you're done using the application, you can deactivate the virtual environment:
+```bash
+deactivate
+```
 
 ## 💻 Usage
 
@@ -118,6 +143,7 @@ Audio Input → Format Conversion → Whisper Model → Chunked Processing → P
 - **CUDA Errors**: Update your GPU drivers or reduce model size
 - **Ollama Connection**: Ensure Ollama service is running before starting transcription
 - **Repetitive Output**: Increase `repetition_penalty` in the code if seeing hallucinations
+- **Package Conflicts**: If you encounter dependency issues, make sure you're using a virtual environment as described in the installation section
 
 ## 📝 License
 
