@@ -1,82 +1,131 @@
-# Audio Transcriber with Whisper and Ollama
+# Speech-to-Text Translator with Whisper and Ollama
 
-A powerful and user-friendly application for transcribing audio files in multiple languages using OpenAI's Whisper model with language translation support via Ollama.
+![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
 
-## Features
+A powerful cross-language transcription and translation tool that uses OpenAI's Whisper model for accurate speech recognition and Ollama for local translation processing.
 
-- **Multilingual Support**: Transcribe audio in 96+ languages
-- **Translation**: Automatically translate non-English transcriptions to English locally using Ollama compatible models
-- **User-Friendly Interface**: Simple Gradio interface for easy interaction
-- **Audio Format Support**: Works with WAV and MP3 files (automatic conversion with ffmpeg)
-- **Temperature Control**: Adjust model creativity for different transcription scenarios
-- **Anti-Hallucination Measures**: Advanced processing to prevent repetitive outputs
+## 📋 Features
 
-## Requirements
+- **Multi-Language Transcription**: Support for 96+ languages with Whisper base model
+- **Real-Time Translation**: Translate non-English audio to English using local Ollama models
+- **Advanced Audio Processing**:
+  - Automatic conversion between audio formats
+  - Supports WAV and MP3 files
+  - Built-in ffmpeg integration
+- **Optimized for Long Files**:
+  - Smart chunking for processing lengthy audio
+  - Overlap management to maintain context
+  - Anti-hallucination measures to prevent repetitive output
+- **Fine Control**:
+  - Temperature adjustment for varying transcription creativity
+  - Language selection for accurate source processing
+- **Clean User Interface**:
+  - Simple Gradio web interface
+  - Separate display of original and translated content
+
+## 🚀 Quick Start
+
+### Prerequisites
 
 - Python 3.8+
-- FFmpeg (included or system-installed)
-- Ollama (optional, for translation features)
-- CUDA-compatible GPU recommended for faster processing
+- CUDA-compatible GPU (recommended for faster processing)
+- FFmpeg (included or installed separately)
+- Ollama (for translation features)
 
-## Installation
+### Installation
 
-1. Clone this repository:
-   ```
-   git clone https://github.com/yourusername/audio-transcriber.git
-   cd audio-transcriber
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/bitzspider/Speech-To-Text-Translator.git
+   cd Speech-To-Text-Translator
    ```
 
-2. Install dependencies:
-   ```
+2. **Install dependencies**:
+   ```bash
    pip install -r requirements.txt
    ```
 
-3. (Optional) Install Ollama for translation support:
-   - Follow instructions at [Ollama's website](https://ollama.ai/) to install
-   - Download at least one model (e.g., `ollama pull llama3`)
+3. **Set up Ollama** (for translation):
+   - Install Ollama from [ollama.ai](https://ollama.ai)
+   - Download at least one language model:
+     ```bash
+     ollama pull llama3    # Recommended default
+     # Other options: mistral, gemma:2b, phi3:mini
+     ```
 
-## Usage
-
-1. Run the application:
-   ```
+4. **Launch the application**:
+   ```bash
    python transcribe.py
    ```
 
-2. Access the web interface at http://localhost:7860 in your browser
+5. **Access the UI**:
+   - Open your browser at http://localhost:7860
 
-3. Upload an audio file (WAV or MP3)
+## 💻 Usage
 
-4. Select the source language of the audio
+1. **Upload Audio**: Select any WAV or MP3 file
+2. **Choose Language**: Select the source language of your audio
+3. **Translation Settings**:
+   - Enable/disable translation to English
+   - Select which Ollama model to use for translation
+4. **Adjust Temperature**:
+   - 0.0 for deterministic (consistent) results
+   - Higher values for more creative transcription
+5. **Start Processing**: Click "Transcribe" and wait for results
+6. **View Results**:
+   - English translation (if enabled)
+   - Original transcription in source language
 
-5. Choose whether to translate non-English transcriptions to English
+## ⚙️ How It Works
 
-6. Adjust temperature (0.0 for deterministic output, higher for more creative transcriptions)
+### Transcription Pipeline
 
-7. Click "Transcribe" to process the audio
+```
+Audio Input → Format Conversion → Whisper Model → Chunked Processing → Post-Processing → Output
+```
 
-## How It Works
+1. **Audio Processing**:
+   - Input audio is converted to WAV format if needed
+   - Audio is normalized and prepared for transcription
 
-The application uses the following pipeline:
+2. **Speech Recognition**:
+   - Whisper model processes audio in optimal chunks
+   - Each chunk is analyzed with context from adjacent chunks
+   - Advanced parameters prevent repetition and hallucination
 
-1. Audio file is uploaded and converted to WAV format if needed
-2. Whisper model processes the audio in optimized chunks
-3. Post-processing removes hallucinations and repetitive patterns
-4. For non-English audio, Ollama can translate the transcription to English
-5. Results are displayed in the interface (original and translated versions)
+3. **Translation** (if enabled):
+   - Original transcription is divided into small chunks
+   - Each chunk is translated individually by Ollama
+   - Translations are combined while preserving context
+   - Progress is tracked and displayed in console
 
-## Troubleshooting
+## 🔧 Customization
 
-- **FFmpeg Issues**: The app includes FFmpeg, but you may need to install it separately if conversion fails
-- **CUDA Out of Memory**: Reduce batch size in the code if you experience GPU memory issues
-- **Ollama Connection Errors**: Ensure Ollama is running before starting the transcriber
+- **Change Default Model**: Edit `model_id` in the script to use different Whisper models
+- **Adjust Chunking**: Modify `chunk_length_s` and `stride_length_s` for different audio segmentation
+- **Translation Customization**: Edit the translation prompt in `translate_with_ollama()` function
 
-## License
+## 📊 Performance Tips
 
-MIT License
+- **GPU Acceleration**: Using CUDA dramatically improves transcription speed
+- **Memory Usage**: Reduce `batch_size` if experiencing memory issues
+- **Long Files**: The chunking mechanism handles files of any length
+- **Translation Speed**: Smaller LLMs like Phi-3 Mini are faster for translation
 
-## Acknowledgements
+## 🔍 Troubleshooting
 
-- [OpenAI Whisper](https://github.com/openai/whisper) for the speech recognition model
-- [Gradio](https://gradio.app/) for the web interface framework
-- [Hugging Face Transformers](https://huggingface.co/docs/transformers/index) for model integration
-- [Ollama](https://ollama.ai/) for local language model support 
+- **ffmpeg Issues**: Install ffmpeg manually if audio conversion fails
+- **CUDA Errors**: Update your GPU drivers or reduce model size
+- **Ollama Connection**: Ensure Ollama service is running before starting transcription
+- **Repetitive Output**: Increase `repetition_penalty` in the code if seeing hallucinations
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgements
+
+- [OpenAI Whisper](https://github.com/openai/whisper) - Speech recognition model
+- [Ollama](https://ollama.ai/) - Local LLM for translation
+- [Gradio](https://gradio.app/) - UI framework
+- [Hugging Face Transformers](https://huggingface.co/docs/transformers/index) - Model integration 
