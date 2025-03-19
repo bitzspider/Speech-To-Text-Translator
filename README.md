@@ -1,4 +1,4 @@
-# Audio Transcriber with Whisper
+# Audio Transcriber with Whisper and Ollama
 
 A powerful and user-friendly application for transcribing audio files in multiple languages using OpenAI's Whisper model with language translation support via Ollama.
 
