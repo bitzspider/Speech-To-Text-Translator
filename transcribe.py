@@ -124,7 +124,7 @@ def translate_with_ollama(text, model_name):
         translated_chunks = []
         for i, chunk in enumerate(chunks):
             print(f"Translating chunk {i+1}/{len(chunks)}: {chunk}")
-            prompt = f"Translate the following text to English word for word. DO NOT summarize. ONLY return the translated text without ANY explanations:\n\n{chunk}"
+            prompt = f"Translate the following text to English word for word. DO NOT summarize. If you aren't able to translate just respond [unintelligble]. ONLY return the translated text without ANY explanations or commentary. \n\nTEXT:\n\n{chunk}"
             response = ollama.generate(model=model_name, prompt=prompt)
             translation = response['response'].strip()
             translated_chunks.append(translation)
