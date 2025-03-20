@@ -139,7 +139,11 @@ Audio Input → Format Conversion → Whisper Model → Chunked Processing → P
 
 ## 🔍 Troubleshooting
 
-- **ffmpeg Issues**: Install ffmpeg manually if audio conversion fails
+- **ffmpeg/ffprobe Issues**: 
+  - The application requires both ffmpeg.exe and ffprobe.exe to be present in the main directory
+  - If you're getting errors about missing ffprobe, download it from [ffbinaries.com](https://ffbinaries.com/downloads) and place it in the same directory as ffmpeg.exe
+  - For Windows 64-bit: download [ffprobe-4.2-win-64.zip](https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v4.2/ffprobe-4.2-win-64.zip)
+  - The application includes a fallback method using librosa if ffmpeg/ffprobe are not available, but direct ffmpeg support is recommended
 - **CUDA Errors**: Update your GPU drivers or reduce model size
 - **Ollama Connection**: Ensure Ollama service is running before starting transcription
 - **Repetitive Output**: Increase `repetition_penalty` in the code if seeing hallucinations

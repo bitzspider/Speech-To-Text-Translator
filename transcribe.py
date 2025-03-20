@@ -17,15 +17,25 @@ import re
 # Suppress specific warnings if needed
 warnings.filterwarnings("ignore", message="The input name `inputs` is deprecated")
 
-# Set the direct path to ffmpeg.exe
+# Set the direct path to ffmpeg executables
 current_dir = os.path.dirname(os.path.abspath(__file__))
 ffmpeg_path = os.path.join(current_dir, "ffmpeg.exe")
+ffprobe_path = os.path.join(current_dir, "ffprobe.exe")
 
 # Verify ffmpeg.exe exists and add its directory to PATH
 if os.path.exists(ffmpeg_path):
     print(f"Found ffmpeg at: {ffmpeg_path}")
     # Add the directory containing ffmpeg.exe to the PATH
     os.environ["PATH"] = current_dir + os.pathsep + os.environ["PATH"]
+    
+    # For pydub to recognize the ffmpeg/ffprobe executables
+    os.environ["FFMPEG_BINARY"] = ffmpeg_path
+    if os.path.exists(ffprobe_path):
+        os.environ["FFPROBE_BINARY"] = ffprobe_path
+        print(f"Found ffprobe at: {ffprobe_path}")
+    else:
+        print(f"Warning: ffprobe.exe not found at: {ffprobe_path}")
+        print("Creating a custom processing pipeline for audio files.")
 else:
     print(f"Warning: ffmpeg.exe not found at: {ffmpeg_path}")
     print("Audio processing may not work correctly.")
@@ -108,8 +118,8 @@ def translate_with_ollama(text, model_name):
             current_chunk.append(word)
             word_count += 1
             
-            # Aim for chunks of ~15 tokens (roughly 4 words)
-            if word_count >= 4:
+            # Aim for chunks of 15 words
+            if word_count >= 15:
                 chunks.append(' '.join(current_chunk))
                 current_chunk = []
                 word_count = 0
@@ -124,7 +134,7 @@ def translate_with_ollama(text, model_name):
         translated_chunks = []
         for i, chunk in enumerate(chunks):
             print(f"Translating chunk {i+1}/{len(chunks)}: {chunk}")
-            prompt = f"Translate the following text to English word for word. DO NOT summarize. If you aren't able to translate just respond [unintelligble]. ONLY return the translated text without ANY explanations or commentary. \n\nTEXT:\n\n{chunk}"
+            prompt = f"Translate the following TEXT to English. DO NOT summarize. If you aren't able to translate just respond [unintelligble]. ONLY return the translated text without ANY explanations or commentary. \n\nTEXT:\n\n{chunk}"
             response = ollama.generate(model=model_name, prompt=prompt)
             translation = response['response'].strip()
             translated_chunks.append(translation)
@@ -139,30 +149,64 @@ def translate_with_ollama(text, model_name):
         print(f"Translation error with Ollama: {str(e)}")
         return f"Translation failed: {str(e)}"
 
+# Function to convert MP3 to WAV using librosa directly if ffmpeg fails
+def fallback_convert_audio(audio_file):
+    """Convert audio file to numpy array using librosa if ffmpeg is not available"""
+    try:
+        print(f"Using fallback conversion method for: {audio_file}")
+        # Load audio file using librosa
+        y, sr = librosa.load(audio_file, sr=16000, mono=True)
+        
+        # Create a temporary WAV file
+        temp_wav = tempfile.NamedTemporaryFile(suffix='.wav', delete=False).name
+        
+        # Save as WAV
+        import soundfile as sf
+        sf.write(temp_wav, y, sr, format='WAV')
+        
+        print(f"Fallback conversion successful: {temp_wav}")
+        return temp_wav
+    except Exception as e:
+        print(f"Error in fallback audio conversion: {str(e)}")
+        return audio_file
+
 # Function to convert MP3 to WAV if needed
 def convert_to_wav(audio_file):
-    """Convert audio file to WAV format if it's an MP3"""
-    if audio_file.lower().endswith('.mp3'):
-        print(f"Converting MP3 to WAV: {audio_file}")
-        wav_file = os.path.splitext(audio_file)[0] + '.wav'
-        # If the file exists, use a temporary file instead
-        if os.path.exists(wav_file):
-            temp_wav = tempfile.NamedTemporaryFile(suffix='.wav', delete=False).name
-            wav_file = temp_wav
+    """Convert audio file to WAV format if needed"""
+    if audio_file is None:
+        return None
+        
+    try:
+        # If file is already WAV, just return it
+        if audio_file.lower().endswith('.wav'):
+            return audio_file
             
+        print(f"Converting audio to WAV: {audio_file}")
+        
+        # Try with ffmpeg first
         try:
+            wav_file = os.path.splitext(audio_file)[0] + '.wav'
+            # If the file exists, use a temporary file instead
+            if os.path.exists(wav_file):
+                temp_wav = tempfile.NamedTemporaryFile(suffix='.wav', delete=False).name
+                wav_file = temp_wav
+                
             subprocess.run([
                 'ffmpeg', '-i', audio_file, 
                 '-acodec', 'pcm_s16le', '-ac', '1', '-ar', '16000',
                 wav_file
             ], check=True, capture_output=True)
+            
             print(f"Conversion successful: {wav_file}")
             return wav_file
-        except subprocess.CalledProcessError as e:
-            print(f"Error converting MP3 to WAV: {str(e)}")
-            print(f"STDERR: {e.stderr.decode()}")
-            return audio_file
-    return audio_file
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            print(f"Error using ffmpeg: {str(e)}")
+            print("Trying fallback method...")
+            return fallback_convert_audio(audio_file)
+    except Exception as e:
+        print(f"Error converting audio: {str(e)}")
+        # Return original file as last resort
+        return audio_file
 
 def transcribe(audio_file, language, translate_with_ollama_checkbox, ollama_model, temperature=0.0):
     if audio_file is None:
